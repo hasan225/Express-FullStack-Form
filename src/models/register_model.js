@@ -24,7 +24,6 @@ const registerSchema = new mongoose.Schema({
   ],
 });
 
-console.log(process.env.SECRET_KEY)
 registerSchema.methods.generateAuthToken = async function () {
   try {
     const token = jwt.sign(

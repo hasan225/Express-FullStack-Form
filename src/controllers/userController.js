@@ -1,5 +1,6 @@
 const registerModel = require("../models/register_model");
 const bcrypt = require("bcrypt");
+const cookie = require("cookie");
 
 const userRegisterPage = (req, res) => {
   res.render("register");
@@ -19,8 +20,16 @@ const userRegisteration = async (req, res) => {
       });
 
       const token = await registerUser.generateAuthToken();
-      // res.cookie("jwt",token)
-      // console.log(cookie)
+
+      // Set a cookie
+      const cookieValue = cookie.serialize("jwt", token, {
+        maxAge: 360, // Cookie will expire after 1 hour
+        httpOnly: true, // Cookie is accessible only through the HTTP protocol
+        secure: true, // Cookie will only be sent over HTTPS
+      });
+
+      // Send the cookie in the response header
+      res.setHeader("Set-Cookie", cookieValue);
 
       const saveDB = await registerUser.save();
       res.status(200).render("index", {
@@ -48,7 +57,16 @@ const userLogin = async (req, res) => {
 
     const token = await userEmail.generateAuthToken();
 
-    
+    // Set a cookie
+    const cookieValue = cookie.serialize("jwt", token, {
+      maxAge: 360, // Cookie will expire after 1 hour
+      httpOnly: true, // Cookie is accessible only through the HTTP protocol
+      secure: true, // Cookie will only be sent over HTTPS
+    });
+
+    // Send the cookie in the response header
+    res.setHeader("Set-Cookie", cookieValue);
+
     if (isMatch) {
       res.status(201).render("index", {
         user: `${userEmail.firstname}  ${userEmail.lastname} `,
@@ -58,7 +76,40 @@ const userLogin = async (req, res) => {
     }
   } catch (error) {
     res.send(error);
-    console.log(error,"error came");
+    console.log(error, "error came");
+  }
+};
+
+const userCookiePage = (req, res) => {
+  console.log("hello world");
+  try {
+    res.status(200).render("cookies", {
+      cookie: `${req.cookies.jwt}`,
+    });
+  } catch (error) {
+    res.status(401).send("please sign up first");
+  }
+};
+
+const userLogoutPage = (req, res, next) => {
+  console.log(req.user.firstname);
+  try {
+    req.user.token = [];
+    console.log(req.user.token)
+
+    res.clearCookie('jwt');
+
+    // Delete a cookie
+    const cookieOptions = {
+      maxAge: 0,
+    };
+
+    const cookieValue = cookie.serialize("jwt", "", cookieOptions);
+    res.setHeader("Set-Cookie", cookieValue);
+    // next()
+    res.render("login");
+  } catch (error) {
+    res.status(401).send(error, "this came");
   }
 };
 
@@ -67,4 +118,6 @@ module.exports = {
   userRegisteration,
   userLoginPage,
   userLogin,
+  userCookiePage,
+  userLogoutPage,
 };

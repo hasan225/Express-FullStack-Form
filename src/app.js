@@ -4,12 +4,16 @@ const app = express();
 const path = require("path");
 const hbs = require("hbs");
 require("./db/connection");
+const cookieParser = require("cookie-parser");
 const {
   userRegisterPage,
   userRegisteration,
   userLoginPage,
   userLogin,
+  userCookiePage,
+  userLogoutPage,
 } = require("./controllers/userController");
+const auth = require("./middleware/auth");
 
 const port = process.env.PORT || 4000;
 const host = process.env.HOST;
@@ -22,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(staticPath));
 app.set("view engine", "hbs");
 app.set("views", pagesPath);
+app.use(cookieParser());
 hbs.registerPartials(partialsPath);
 
 app.get("/", (req, res) => {
@@ -31,6 +36,8 @@ app.get("/register", userRegisterPage);
 app.post("/register", userRegisteration);
 app.get("/login", userLoginPage);
 app.post("/login", userLogin);
+app.get("/cookie", auth, userCookiePage);
+app.get("/logout", auth, userLogoutPage);
 
 app.listen(port, host, () => {
   console.log(`your server is live at http://${host}:${port}`);
